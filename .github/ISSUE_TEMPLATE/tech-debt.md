@@ -1,9 +1,9 @@
 ---
 name: Deuda Técnica
 about: Registrar algo pendiente o por mejorar en el código
-title: '[TECH-DEBT] '
+title: "[TECH-DEBT] "
 labels: tech-debt
-assignees: ''
+assignees: ""
 ---
 
 ## Descripción del problema
