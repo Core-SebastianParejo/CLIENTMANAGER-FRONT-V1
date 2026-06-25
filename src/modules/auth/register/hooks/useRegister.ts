@@ -6,23 +6,34 @@ import { ROUTES } from "@/lib/constants/routes";
 export const useRegister = () => {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const doRegister = async (name: string, email: string, password: string) => {
     setLoading(true);
+    setError(null);
     try {
       const response = await apiFetch("/auth/register", {
         method: "POST",
         body: JSON.stringify({ name, email, password }),
       });
 
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        setError(
+          errorData.message || "No se pudo crear la cuenta. Intenta de nuevo.",
+        );
+        return;
+      }
+
       const data = await response.json();
       localStorage.setItem("token", data.token);
       router.push(ROUTES.dashboard);
-    } catch (error) {
-      console.error(error);
+    } catch {
+      setError("No se pudo conectar con el servidor. Intenta más tarde.");
     } finally {
       setLoading(false);
     }
   };
-  return { doRegister, loading };
+
+  return { doRegister, loading, error };
 };
