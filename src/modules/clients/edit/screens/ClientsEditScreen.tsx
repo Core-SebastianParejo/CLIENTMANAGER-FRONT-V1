@@ -6,10 +6,13 @@ import { ROUTES } from "@/lib/constants/routes";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-type Errors = {
-  fullName?: string;
-  email?: string;
+type FormValues = {
+  fullName: string;
+  email: string;
+  phone: string;
+  company: string;
 };
+type Errors = { fullName?: string; email?: string };
 
 const inputClass = (hasError: boolean) =>
   `block w-full rounded-lg border px-3.5 py-2.5 text-slate-900 placeholder:text-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:border-transparent transition ${
@@ -18,10 +21,8 @@ const inputClass = (hasError: boolean) =>
 
 const ClientEditScreen = ({ id }: { id: string }) => {
   const { client, loading, getClient, updateClient } = useEditClient();
-  const [nameInput, setNameInput] = useState("");
-  const [emailInput, setEmailInput] = useState("");
-  const [phoneInput, setPhoneInput] = useState("");
-  const [companyInput, setCompanyInput] = useState("");
+  // Track only the fields the user has edited — client data fills the rest during render
+  const [edits, setEdits] = useState<Partial<FormValues>>({});
   const [errors, setErrors] = useState<Errors>({});
   const router = useRouter();
 
@@ -29,14 +30,19 @@ const ClientEditScreen = ({ id }: { id: string }) => {
     getClient(id);
   }, [id, getClient]);
 
-  useEffect(() => {
-    if (client) {
-      setNameInput(client.fullName);
-      setEmailInput(client.email);
-      setPhoneInput(client.phone ?? "");
-      setCompanyInput(client.company ?? "");
-    }
-  }, [client]);
+  // Derived during render: local edits take precedence over the fetched client values
+  const nameInput = edits.fullName ?? client?.fullName ?? "";
+  const emailInput = edits.email ?? client?.email ?? "";
+  const phoneInput = edits.phone ?? client?.phone ?? "";
+  const companyInput = edits.company ?? client?.company ?? "";
+
+  const setField =
+    (field: keyof FormValues) => (e: React.ChangeEvent<HTMLInputElement>) => {
+      setEdits((p) => ({ ...p, [field]: e.target.value }));
+      if (errors[field as keyof Errors]) {
+        setErrors((p) => ({ ...p, [field]: undefined }));
+      }
+    };
 
   const validate = () => {
     const next: Errors = {};
@@ -114,11 +120,7 @@ const ClientEditScreen = ({ id }: { id: string }) => {
               <input
                 type="text"
                 value={nameInput}
-                onChange={(e) => {
-                  setNameInput(e.target.value);
-                  if (errors.fullName)
-                    setErrors((p) => ({ ...p, fullName: undefined }));
-                }}
+                onChange={setField("fullName")}
                 placeholder="Juan Pérez"
                 className={inputClass(!!errors.fullName)}
               />
@@ -134,11 +136,7 @@ const ClientEditScreen = ({ id }: { id: string }) => {
               <input
                 type="email"
                 value={emailInput}
-                onChange={(e) => {
-                  setEmailInput(e.target.value);
-                  if (errors.email)
-                    setErrors((p) => ({ ...p, email: undefined }));
-                }}
+                onChange={setField("email")}
                 placeholder="juan@empresa.com"
                 className={inputClass(!!errors.email)}
               />
@@ -154,7 +152,7 @@ const ClientEditScreen = ({ id }: { id: string }) => {
               <input
                 type="text"
                 value={phoneInput}
-                onChange={(e) => setPhoneInput(e.target.value)}
+                onChange={setField("phone")}
                 placeholder="+57 300 000 0000"
                 className={inputClass(false)}
               />
@@ -167,7 +165,7 @@ const ClientEditScreen = ({ id }: { id: string }) => {
               <input
                 type="text"
                 value={companyInput}
-                onChange={(e) => setCompanyInput(e.target.value)}
+                onChange={setField("company")}
                 placeholder="Acme Inc."
                 className={inputClass(false)}
               />
