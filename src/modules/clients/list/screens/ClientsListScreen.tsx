@@ -2,11 +2,13 @@
 import { useListClient } from "../hooks/useClient";
 import { useRouter } from "next/navigation";
 import { ROUTES } from "@/lib/constants/routes";
+import { useDeleteClient } from "../hooks/useDeleteClient";
 
 const ClientsListScreen = () => {
-  const { clients, loading } = useListClient();
+  const { clients, loading: loadingList } = useListClient();
+  const { deleteClient, loading: loadingDelete } = useDeleteClient();
   const router = useRouter();
-  if (loading) return <div>Cargando...</div>;
+  if (loadingList) return <div>Cargando...</div>;
 
   return (
     <table>
@@ -34,7 +36,12 @@ const ClientsListScreen = () => {
               </button>
             </td>
             <td>
-              <button onClick={() => console.log(client.id)}>Eliminar</button>
+              <button
+                disabled={loadingDelete}
+                onClick={() => deleteClient(client.id)}
+              >
+                Eliminar
+              </button>
             </td>
           </tr>
         ))}
